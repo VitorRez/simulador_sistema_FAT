@@ -17,6 +17,7 @@ struct _dir_entry_t {
 	uint8_t reserved[7];
 	uint16_t first_block;
 	uint32_t size;
+	int parent_dir;
 };
 
 typedef struct _dir_entry_t  dir_entry_t;
@@ -30,13 +31,14 @@ typedef union _data_cluster data_cluster;
 
 void init(uint16_t*, uint8_t*, dir_entry_t*, data_cluster*);
 void load(uint8_t*, uint16_t*, dir_entry_t*, data_cluster*);
-void ls(data_cluster*);
-void mkdir(uint16_t*, char*, data_cluster*);
-void create(uint16_t*, char*, data_cluster*);
-void unlink(uint16_t*, char*, data_cluster*);
-void write(uint16_t*, char*, char*, int, data_cluster*);
-void append(uint16_t*, char*, char*, int, data_cluster*);
-void read(uint16_t*, char*, data_cluster*);
+int cd(data_cluster*, char*);
+void ls(data_cluster*, int);
+void mkdir(uint16_t*, char*, data_cluster*, int);
+void create(uint16_t*, char*, data_cluster*, int);
+void unlink(uint16_t*, char*, data_cluster*, int);
+void write(uint16_t*, char*, char*, int, data_cluster*, int);
+void append(uint16_t*, char*, char*, int, data_cluster*, int);
+void read(uint16_t*, char*, data_cluster*, int);
 void save(uint16_t*, uint8_t*, dir_entry_t*, data_cluster*);
-void search_in_fat(uint16_t*, data_cluster*, int);
+int find_last_block(uint16_t*, int);
 void rm_dir_in_fat(uint16_t*, data_cluster*, int);
