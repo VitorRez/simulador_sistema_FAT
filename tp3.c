@@ -37,6 +37,7 @@ int get_command(char* command, uint16_t* fat, uint8_t* boot_block, dir_entry_t* 
     for(int i = 0; i < num_dirs; i++){
         printf("%s ", path[i]);
     }*/
+    int old_dir = current_dir;
     if(strcmp(commands[0], "cd") == 0){
         if(commands[1] == NULL){
             current_dir = 0;
@@ -50,11 +51,9 @@ int get_command(char* command, uint16_t* fat, uint8_t* boot_block, dir_entry_t* 
     }
     if(strcmp(commands[0], "init") == 0){
         init(fat, boot_block, root_dir, clusters);
-        return current_dir;
     }
     if(strcmp(commands[0], "load") == 0){
         load(boot_block, fat, root_dir, clusters);
-        return current_dir;
     }
     if(strcmp(commands[0], "ls") == 0){
         if(commands[1] != NULL){
@@ -64,7 +63,6 @@ int get_command(char* command, uint16_t* fat, uint8_t* boot_block, dir_entry_t* 
             current_dir = cd(clusters, path[num_dirs-1]);
         }
         ls(clusters, current_dir);
-        return current_dir;
     }
     if(strcmp(commands[0], "mkdir") == 0){
         if(commands[1][0] != '/') return current_dir;
@@ -73,7 +71,6 @@ int get_command(char* command, uint16_t* fat, uint8_t* boot_block, dir_entry_t* 
         if(num_dirs > 1)current_dir = cd(clusters, path[num_dirs-2]);
         mkdir(fat, path[num_dirs-1], clusters, current_dir);
         save(fat, boot_block, root_dir, clusters);
-        return current_dir;
     }
     if(strcmp(commands[0], "create") == 0){
         if(commands[1][0] != '/') return current_dir;
@@ -82,7 +79,6 @@ int get_command(char* command, uint16_t* fat, uint8_t* boot_block, dir_entry_t* 
         if(num_dirs > 1)current_dir = cd(clusters, path[num_dirs-2]);
         create(fat, path[num_dirs-1], clusters, current_dir);
         save(fat, boot_block, root_dir, clusters);
-        return current_dir;
     }
     if(strcmp(commands[0], "unlink") == 0){
         if(commands[1][0] != '/') return current_dir;
@@ -91,7 +87,6 @@ int get_command(char* command, uint16_t* fat, uint8_t* boot_block, dir_entry_t* 
         if(num_dirs > 1)current_dir = cd(clusters, path[num_dirs-2]);
         unlink(fat, path[num_dirs-1], clusters, current_dir);
         save(fat, boot_block, root_dir, clusters);
-        return current_dir;
     }
     if(strcmp(commands[0], "write") == 0){
         char text[256];
@@ -107,7 +102,6 @@ int get_command(char* command, uint16_t* fat, uint8_t* boot_block, dir_entry_t* 
         if(num_dirs > 1)current_dir = cd(clusters, path[num_dirs-2]);
         write(fat,  path[num_dirs-1], text, size, clusters, current_dir);
         save(fat, boot_block, root_dir, clusters);
-        return current_dir;
     }
     if(strcmp(commands[0], "append") == 0){
         char text[256];
@@ -123,7 +117,6 @@ int get_command(char* command, uint16_t* fat, uint8_t* boot_block, dir_entry_t* 
         if(num_dirs > 1)current_dir = cd(clusters, path[num_dirs-2]);
         append(fat,  path[num_dirs-1], text, size, clusters, current_dir);
         save(fat, boot_block, root_dir, clusters);
-        return current_dir;
     }
     if(strcmp(commands[0], "read") == 0){
         if(commands[1][0] != '/') return current_dir;
@@ -131,8 +124,8 @@ int get_command(char* command, uint16_t* fat, uint8_t* boot_block, dir_entry_t* 
         char **path = processar_string(commands[1], "/", num_dirs);
         if(num_dirs > 1)current_dir = cd(clusters, path[num_dirs-2]);
         read(fat, path[num_dirs-1], clusters, current_dir);
-        return current_dir;
     }
+    return old_dir;
 }
 
 int main(){

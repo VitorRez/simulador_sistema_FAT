@@ -77,7 +77,7 @@ void mkdir(uint16_t *fat, char* dirname, data_cluster *clusters, int current_dir
 			clusters[i].dir->attributes = 1;
 			clusters[i].dir->parent_dir = current_dir;
 			clusters[i].dir->first_block = i;
-			fat[i] = i;
+			fat[10 + i] = i;
 			return;
 		}
 	}
@@ -91,7 +91,7 @@ void create(uint16_t *fat, char* filename, data_cluster *clusters, int current_d
 			clusters[i].dir->size = 36;
 			clusters[i].dir->parent_dir = current_dir;
 			clusters[i].dir->first_block = i;
-			fat[i] = i;
+			fat[10 + i] = i;
 			return;
 		}
 	}
@@ -100,26 +100,32 @@ void create(uint16_t *fat, char* filename, data_cluster *clusters, int current_d
 void unlink(uint16_t *fat, char* name, data_cluster *clusters, int current_dir){
 	for(int i = 1; i < 4086; i++){
 		if(strcmp(clusters[i].dir->filename, name) == 0 && clusters[i].dir->parent_dir == current_dir){
-			if(fat[i] == i){
+			if(clusters[i].dir->attributes == 1){
+				for(int j = i; j < 4086; j++){
+					if(clusters[j].dir->parent_dir == i){
+						return;
+					}
+				}
+			}
+			if(fat[10 + i] == i){
 				strcpy(clusters[i].dir->filename, "");
 				clusters[i].dir->attributes = -1;
-				rm_dir_in_fat(fat, clusters, i);
+				clusters[i].dir->parent_dir = 0;
+				rm_dir_in_fat(fat, clusters, 10 + i);
 			}else{
-				int x = fat[i];
+				int x = fat[10 + i];
 				strcpy(clusters[i].dir->filename, "");
 				clusters[i].dir->attributes = -1;
-				x = fat[i];
-				rm_dir_in_fat(fat, clusters, i);
+				clusters[i].dir->parent_dir = 0;
+				rm_dir_in_fat(fat, clusters, 10 + i);
 				do{
 					strcpy(clusters[x].dir->filename, "");
 					clusters[x].dir->attributes = -1;
-					x = fat[x];
-					rm_dir_in_fat(fat, clusters, x);
+					clusters[i].dir->parent_dir = 0;
+					x = fat[10 + x];
+					rm_dir_in_fat(fat, clusters, 10 + x);
 				}while(x != -1);
 			}
-			strcpy(clusters[i].dir->filename, "");
-			clusters[i].dir->attributes = -1;
-			rm_dir_in_fat(fat, clusters, i);
 			return;
 		}
 	}
@@ -150,14 +156,14 @@ void write(uint16_t *fat, char* filename, char* text, int size, data_cluster *cl
 								if(l == 1024 - 36) break;
 								clusters[k].data[l + 1024 + 36] = (int)text[l];
 							}
-							fat[fat_now] = k;
+							fat[10 + fat_now] = k;
 							fat_now = k;
 							break;
 						}
 					}
 					x = size - 1024 - 36;
 				}while(x < 1024);
-				fat[fat_now] = -1;
+				fat[10 + fat_now] = -1;
 			}else{
 				clusters[i].dir->size = 36;
 				for(j = 0; j < size; j++){
@@ -195,14 +201,14 @@ void append(uint16_t *fat, char* filename, char* text, int size, data_cluster *c
 								if(l == 1024 - 36) break;
 								clusters[k].data[l + 1024 + 36] = (int)text[l];
 							}
-							fat[fat_now] = k;
+							fat[10 + fat_now] = k;
 							fat_now = k;
 							break;
 						}
 					}
 					x = size - 1024 - 36;
 				}while(x < 1024);
-				fat[fat_now] = -1;
+				fat[10 + fat_now] = -1;
 			}
 			else{
 				for(j = 0; j < size; j++){
@@ -221,7 +227,7 @@ void read(uint16_t *fat, char* filename, data_cluster *clusters, int current_dir
 	uint8_t j = 36;
 	for(i = 1; i < 4086; i++){
 		if(strcmp(clusters[i].dir->filename, filename) == 0 && clusters[i].dir->attributes == 0 && clusters[i].dir->parent_dir == current_dir){
-			if(fat[i] == i){
+			if(fat[10 + i] == i){
 				for(j = 36; j <= clusters[i].dir->size; j++){
 					printf("%c", clusters[i].data[j]);
 				}
@@ -230,12 +236,12 @@ void read(uint16_t *fat, char* filename, data_cluster *clusters, int current_dir
 				for(j = 36; j <= clusters[i].dir->size; j++){
 					printf("%c", clusters[i].data[j]);
 				}
-				int x = fat[i];
+				int x = fat[10 + i];
 				do{
 					for(j = 36; j <= clusters[x].dir->size; j++){
 						printf("%c", clusters[x].data[j]);
 					}
-					x = fat[x];
+					x = fat[10 + x];
 				}while(x != -1);
 			printf("\n");
 			}
@@ -246,7 +252,7 @@ void read(uint16_t *fat, char* filename, data_cluster *clusters, int current_dir
 int find_last_block(uint16_t *fat, int first_block){
 	int x = fat[first_block];
 	while(x != -1){
-		x = fat[x];
+		x = fat[10 + x];
 	}
 	return x;
 }
